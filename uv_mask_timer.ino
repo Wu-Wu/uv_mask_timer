@@ -108,8 +108,8 @@ void Exposure() {
 
   char *headers[9] = {
     "EXPOSURE",
-    " PAUSED ",   // TODO
-    "FINISHED",
+    "  HOLD  ",   // TODO
+    " FINISH ",
   };
 
   digitalWrite( UV_MATRIX, HIGH );
