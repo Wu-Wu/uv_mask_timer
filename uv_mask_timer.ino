@@ -1,3 +1,8 @@
+/*
+ * таймер для управления матрицей УФ светодиодов
+ * используется для засветки фоторезиста или паяльной маски
+ * Anton Gerasimov <me@zyxmasta.com>, 2016
+ */
 #include <LiquidCrystal.h>
 #include <QuadEncoder.h>
 #include <TimerSettings.h>
@@ -61,6 +66,7 @@ void loop() {
   }
 }
 
+// заставка
 void Splash() {
   lcd.clear();
   lcd.print( "UV TIMER" );
@@ -89,6 +95,7 @@ void Splash() {
   delay( 1000 );
 }
 
+// засветка
 void Exposure() {
   Serial.println( "MOSFET is ON" );
   digitalWrite( UV_MATRIX, HIGH );
@@ -97,6 +104,7 @@ void Exposure() {
   Serial.println( "MOSFET is OFF" );
 }
 
+// дашборд
 void Dashboard() {
   int minutes;
   int seconds;
@@ -125,6 +133,7 @@ void Dashboard() {
   lcd.print( buf );
 }
 
+// главное меню настроек
 void MenuAdjust () {
   byte current = 1;
   byte previous;
@@ -168,6 +177,7 @@ void MenuAdjust () {
   }
 }
 
+// настройки профилей
 void MenuProfiles ( int current ) {
   char items[][9] = {
     "PROFILE",
@@ -329,7 +339,7 @@ void EditProfile ( int profile_id ) {
   MenuProfiles( profile_id + 1 );
 }
 
-// диалоговое окно ввода единиц времени
+// ввода единиц времени
 void InputTimeValue ( const char* header, const int limit, int *value, const int format_id ) {
   // форматы
   const char formats[][10] = {
@@ -366,6 +376,7 @@ void InputTimeValue ( const char* header, const int limit, int *value, const int
   }
 }
 
+// чтение смещения энкодера
 int readEncoder () {
   switch ( encoder.tick() ) {
     case '>': return 1;
