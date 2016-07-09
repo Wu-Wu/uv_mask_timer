@@ -97,11 +97,54 @@ void Splash() {
 
 // засветка
 void Exposure() {
-  Serial.println( "MOSFET is ON" );
+  unsigned long tm_exposure = settings.time_limit();
+  unsigned long tm_estimated = 0L;
+  unsigned long tm_elapsed = 0L;
+  unsigned long cycles = 0;
+
+  int minutes;
+  int seconds;
+  byte state = 0;
+
+  char *headers[9] = {
+    "EXPOSURE",
+    " PAUSED ",   // TODO
+    "FINISHED",
+  };
+
   digitalWrite( UV_MATRIX, HIGH );
-  delay( 5000 );
+
+  lcd.setCursor( 0, 0 );
+  lcd.print( headers[state] );
+
+  tm_elapsed = millis();
+  tm_estimated = tm_elapsed + tm_exposure;
+
+  while ( tm_elapsed < tm_estimated ) {
+    // форматируем и выводим время экспонирования
+    settings.to_mmss( tm_exposure, &minutes, &seconds );
+    // 46 "."
+    // 32 " "
+    sprintf( buf, " %03d%c%02d ", minutes, ( cycles % 8 ? char( 165 ) : char( 32 ) ), seconds );
+
+    lcd.setCursor( 0, 1 );
+    lcd.print( buf );
+
+    delay( 250 );
+
+    cycles++;
+    tm_exposure -= ( millis() - tm_elapsed );
+    tm_elapsed = millis();
+  }
+
   digitalWrite( UV_MATRIX, LOW );
-  Serial.println( "MOSFET is OFF" );
+
+  // меняем заголовок
+  state = 2;
+  lcd.setCursor( 0, 0 );
+  lcd.print( headers[state] );
+
+  delay( 2500 );
 }
 
 // дашборд
