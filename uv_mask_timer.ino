@@ -435,6 +435,15 @@ void EditProfile ( int profile_id ) {
         done = true;
         settings.from_mmss( profile_id, minutes, seconds );
         settings.update_profiles();
+        // текущий профиль выбран?
+        if ( settings.selected() == profile_id ) {
+          // обнулили значения и минут и секунд?
+          if ( !minutes && !seconds ) {
+            // делаем его не выбранным
+            settings.selected( -1 );
+            settings.update_selected();
+          }
+        }
         break;
       case 3:
         done = true;
