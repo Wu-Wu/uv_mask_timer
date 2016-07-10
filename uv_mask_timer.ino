@@ -34,6 +34,17 @@ TimerSettings settings( MAX_PROFILES );
 char buf[9];
 bool is_ready = false;
 
+// заголовки (первые строки) интерфейса
+const char *headers[9] = {
+  "UV TIMER",     // splash
+  "  OKAY  ",     // dashboard
+  " ADJUST ",     // dashboard
+  "EXPOSURE",     // exposure
+  "  HOLD  ",     // exposure
+  " CANCEL ",     // exposure
+  " FINISH ",     // exposure
+};
+
 void setup() {
   Serial.begin( 9600 );
   lcd.begin( 8, 2 );
@@ -71,7 +82,7 @@ void loop() {
 // заставка
 void Splash() {
   lcd.clear();
-  lcd.print( "UV TIMER" );
+  lcd.print( headers[0] );
 
   for ( byte offset = 0; offset <= 4; offset++ ) {
     for ( byte posL = 0, posR = 7; posL < ( 4 - offset ), posR >= ( 4 + offset ); posL++, posR-- ) {
@@ -108,21 +119,14 @@ void Exposure() {
   int minutes;
   int seconds;
   int clicks = 0;
-  byte state = 3;
+  byte state;
   bool done = false;
   bool hold = false;
-
-  char *headers[9] = {
-    "EXPOSURE",
-    "  HOLD  ",
-    " CANCEL ",
-    " FINISH ",
-  };
 
   MatrixOn();
 
   lcd.setCursor( 0, 0 );
-  lcd.print( headers[0] );
+  lcd.print( headers[3] );
 
   tm_elapsed = millis();
   tm_estimated = tm_elapsed + tm_exposure;
@@ -162,12 +166,12 @@ void Exposure() {
 
         // меняем заголовок
         lcd.setCursor( 0, 0 );
-        lcd.print( headers[ hold ? 1 : 0 ] );
+        lcd.print( headers[ hold ? 4 : 3 ] );
         break;
       case 2:
         // двойной клик: отмена работы
         done = true;
-        state = 2;
+        state = 5;
         break;
       default:
         ;;;
@@ -185,7 +189,7 @@ void Exposure() {
     if ( tm_elapsed > tm_estimated ) {
       // нормальное завершение: время вышло
       done = true;
-      state = 3;
+      state = 6;
     }
   }
 
@@ -226,27 +230,19 @@ void FlashDisplay( byte times ) {
 void Dashboard() {
   int minutes;
   int seconds;
-  byte state;
-
-  char *headers[9] = {
-    "  OKAY  ",
-    " ADJUST ",
-  };
 
   if ( settings.selected() != -1 ) {
     settings.to_mmss( settings.selected(), &minutes, &seconds );
     sprintf( buf, " %03d.%02d ", minutes, seconds );
-    state = 0;
     is_ready = true;
   }
   else {
     sprintf( buf, " %03s.%02s ", "---", "--" );
-    state = 1;
     is_ready = false;
   }
 
   lcd.setCursor( 0, 0 );
-  lcd.print( headers[state] );
+  lcd.print( headers[ is_ready ? 1 : 2 ] );
   lcd.setCursor( 0, 1 );
   lcd.print( buf );
 }
