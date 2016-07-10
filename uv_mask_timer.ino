@@ -39,7 +39,7 @@ void setup() {
   lcd.begin( 8, 2 );
 
   pinMode( UV_MATRIX, OUTPUT );
-  digitalWrite( UV_MATRIX, LOW );
+  MatrixOff();
 
   settings.begin();
 
@@ -103,46 +103,94 @@ void Exposure() {
   unsigned long tm_estimated = 0L;
   unsigned long tm_elapsed = 0L;
   unsigned long cycles = 0;
+  unsigned long hold_on = 0L;
 
   int minutes;
   int seconds;
-  byte state = 0;
+  int clicks = 0;
+  byte state = 3;
+  byte header;
+  bool done = false;
+  bool hold = false;
 
   char *headers[9] = {
     "EXPOSURE",
-    "  HOLD  ",   // TODO
+    "  HOLD  ",
+    " CANCEL ",
     " FINISH ",
   };
 
-  digitalWrite( UV_MATRIX, HIGH );
+  MatrixOn();
 
   lcd.setCursor( 0, 0 );
-  lcd.print( headers[state] );
+  lcd.print( headers[0] );
 
   tm_elapsed = millis();
   tm_estimated = tm_elapsed + tm_exposure;
 
-  while ( tm_elapsed < tm_estimated ) {
+  while ( !done ) {
     // форматируем и выводим время экспонирования
     settings.to_mmss( tm_exposure, &minutes, &seconds );
-    // 46 "."
-    // 32 " "
-    sprintf( buf, " %03d%c%02d ", minutes, ( cycles % 8 ? char( 165 ) : char( 32 ) ), seconds );
+    sprintf( buf, " %03d.%02d ", minutes, seconds );
 
     lcd.setCursor( 0, 1 );
     lcd.print( buf );
 
-    delay( 250 );
+    switch ( clicks ) {
+      case 1:
+        // одиночный клик: приостановка/возобновление
+        if ( !hold ) {
+          hold = true;
+          // TODO: неверно пересчитываем
+          hold_on = millis();
+          header = 1;
+          MatrixOff();
+        }
+        else {
+          // пересчитываем время окончания заново
+          // TODO: неверно пересчитываем
+          tm_estimated  += hold_on;
+          tm_elapsed    -= hold_on;
+          hold_on       = 0L;
+          hold = false;
+          header = 0;
+          MatrixOn();
+        }
 
-    cycles++;
-    tm_exposure -= ( millis() - tm_elapsed );
-    tm_elapsed = millis();
+        // меняем заголовок
+        lcd.setCursor( 0, 0 );
+        lcd.print( headers[header] );
+        break;
+      case 2:
+        // двойной клик: отмена работы
+        done = true;
+        state = 2;
+        tm_elapsed = 0L;
+        break;
+      default:
+        ;;;
+    }
+
+    delay( 10 );
+
+    if ( !hold ) {
+      cycles++;
+      tm_exposure -= ( millis() - tm_elapsed );
+      tm_elapsed = millis();
+    }
+
+    clicks = buttonR.poll();
+
+    if ( tm_elapsed > tm_estimated ) {
+      // нормальное завершение: время вышло
+      done = true;
+      state = 3;
+    }
   }
 
-  digitalWrite( UV_MATRIX, LOW );
+  MatrixOff();
 
   // меняем заголовок
-  state = 2;
   lcd.setCursor( 0, 0 );
   lcd.print( headers[state] );
 
@@ -150,6 +198,16 @@ void Exposure() {
   FlashDisplay( 3 );
 
   delay( 1000 );
+}
+
+// включение матрицы светодиодов
+void MatrixOn() {
+  digitalWrite( UV_MATRIX, HIGH );
+}
+
+// выключение матрицы светодиодов
+void MatrixOff() {
+  digitalWrite( UV_MATRIX, LOW );
 }
 
 // моргаем экраном
