@@ -47,6 +47,8 @@ void setup() {
     is_ready = true;
 
   Splash();
+  // моргаем экраном
+  FlashDisplay( 2 );
 }
 
 void loop() {
@@ -144,7 +146,21 @@ void Exposure() {
   lcd.setCursor( 0, 0 );
   lcd.print( headers[state] );
 
-  delay( 2500 );
+  // моргаем экраном
+  FlashDisplay( 3 );
+
+  delay( 1000 );
+}
+
+// моргаем экраном
+void FlashDisplay( byte times ) {
+  while ( times > 0 ) {
+    delay( 600 );
+    lcd.noDisplay();
+    delay( 400 );
+    lcd.display();
+    times--;
+  }
 }
 
 // дашборд
