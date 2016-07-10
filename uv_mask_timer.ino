@@ -102,14 +102,13 @@ void Exposure() {
   unsigned long tm_exposure = settings.time_limit();
   unsigned long tm_estimated = 0L;
   unsigned long tm_elapsed = 0L;
-  unsigned long cycles = 0;
-  unsigned long hold_on = 0L;
+  unsigned long tm_hold_on = 0L;
+  unsigned long delta = 0L;
 
   int minutes;
   int seconds;
   int clicks = 0;
   byte state = 3;
-  byte header;
   bool done = false;
   bool hold = false;
 
@@ -140,32 +139,35 @@ void Exposure() {
       case 1:
         // одиночный клик: приостановка/возобновление
         if ( !hold ) {
-          hold = true;
-          // TODO: неверно пересчитываем
-          hold_on = millis();
-          header = 1;
+          // момент время приостановки
+          tm_hold_on  = millis();
+
+          // отключаем матрицу
           MatrixOff();
         }
         else {
-          // пересчитываем время окончания заново
-          // TODO: неверно пересчитываем
-          tm_estimated  += hold_on;
-          tm_elapsed    -= hold_on;
-          hold_on       = 0L;
-          hold = false;
-          header = 0;
+          // длительность приостановки
+          delta = millis() - tm_hold_on;
+
+          // пересчитываем время с учётом времени приостановки
+          tm_estimated  += delta;
+          tm_elapsed    += delta;
+
+          // включаем матрицу
           MatrixOn();
         }
 
+        // инвертируем флаг приостановки
+        hold = !hold;
+
         // меняем заголовок
         lcd.setCursor( 0, 0 );
-        lcd.print( headers[header] );
+        lcd.print( headers[ hold ? 1 : 0 ] );
         break;
       case 2:
         // двойной клик: отмена работы
         done = true;
         state = 2;
-        tm_elapsed = 0L;
         break;
       default:
         ;;;
@@ -174,7 +176,6 @@ void Exposure() {
     delay( 10 );
 
     if ( !hold ) {
-      cycles++;
       tm_exposure -= ( millis() - tm_elapsed );
       tm_elapsed = millis();
     }
