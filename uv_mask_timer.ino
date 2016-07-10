@@ -464,6 +464,8 @@ void EditProfile ( int profile_id ) {
 
 // ввода единиц времени
 void InputTimeValue ( const char* header, const int limit, int *value, const int format_id ) {
+  int clicks;
+
   // форматы
   const char formats[][10] = {
     "< %03d >",   // минуты
@@ -472,9 +474,7 @@ void InputTimeValue ( const char* header, const int limit, int *value, const int
 
   lcd.clear();
 
-  int clicks = buttonR.poll();
-
-  while ( clicks != 1 ) {
+  while ( ( clicks = buttonR.poll() ) != 1 ) {
     *value += readEncoder();
 
     // двойной клик: сбрасываем значение
@@ -494,8 +494,6 @@ void InputTimeValue ( const char* header, const int limit, int *value, const int
     sprintf( buf, formats[ format_id ], *value );
     lcd.setCursor( 0, 1 );
     lcd.print( buf );
-
-    clicks = buttonR.poll();
   }
 }
 
