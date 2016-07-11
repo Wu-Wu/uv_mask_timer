@@ -18,7 +18,7 @@
 
 #define MAX_PROFILES    8
 
-#define MENU_BASIC      4
+#define MENU_ADJUST     5
 #define MENU_PROFILES   MAX_PROFILES + 2
 
 // ограничения при вводе времени
@@ -43,6 +43,8 @@ const char *headers[9] = {
   "  HOLD  ",     // exposure
   " CANCEL ",     // exposure
   " FINISH ",     // exposure
+  " FLUSH  ",     // flushsettings
+  " MEMORY ",     // flushsettings
 };
 
 void setup() {
@@ -258,6 +260,7 @@ void MenuAdjust () {
     "ADJUST",
     "PROFILE",
     "SOUNDS",
+    "RESET",
     "EXIT"
   };
 
@@ -265,7 +268,7 @@ void MenuAdjust () {
     current += readEncoder();
 
     if ( current < 1 ) current = 1;
-    if ( current > MENU_BASIC - 1 ) current = MENU_BASIC - 1;
+    if ( current > MENU_ADJUST - 1 ) current = MENU_ADJUST - 1;
 
     previous = current - 1;
     if ( previous < 1 ) previous = 0;
@@ -280,14 +283,15 @@ void MenuAdjust () {
   }
 
   switch ( current ) {
-    case 0:
-      // todo...
-      // currentEq0();
-      break;
     case 1:
       MenuProfiles( 1 );
       break;
-    // etc
+    case 2:
+      // TODO: MenuSounds
+      break;
+    case 3:
+      FlushSettings();
+      break;
   }
 }
 
@@ -504,4 +508,20 @@ int readEncoder () {
     case '<': return -1;
   }
   return 0;
+}
+
+// сброс всех настроек таймера
+void FlushSettings() {
+  lcd.clear();
+  lcd.setCursor( 0, 0 );
+  lcd.print( headers[7] );
+  lcd.setCursor( 0, 1 );
+  lcd.print( headers[8] );
+
+  // моргаем экраном
+  FlashDisplay( 5 );
+
+  settings.erase();
+
+  delay( 500 );
 }
