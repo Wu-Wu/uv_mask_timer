@@ -7,6 +7,7 @@
 #include <QuadEncoder.h>
 #include <TimerSettings.h>
 #include <MultiClick.h>
+#include "pitches.h"
 
 // энкодер
 #define ENC_CLK         9
@@ -15,6 +16,9 @@
 
 // выход управления матрицей светодиодов
 #define UV_MATRIX       13
+
+// выход управления пищалкой
+#define BUZZER          8
 
 #define MAX_PROFILES    8
 
@@ -51,6 +55,8 @@ void setup() {
   Serial.begin( 9600 );
   lcd.begin( 8, 2 );
 
+  pinMode( BUZZER, OUTPUT );
+
   pinMode( UV_MATRIX, OUTPUT );
   MatrixOff();
 
@@ -67,13 +73,16 @@ void setup() {
 void loop() {
   switch ( buttonR.poll() ) {
     case -1:
+      sfxClickLong();
       MenuAdjust();
       break;
     case 1:
+      sfxClickSingle();
       if ( is_ready )
         Exposure();
       break;
     case 2:
+      sfxClickDouble();
       Splash();
       break;
     default:
@@ -150,6 +159,7 @@ void Exposure() {
 
           // отключаем матрицу
           MatrixOff();
+          sfxHoldOn();
         }
         else {
           // длительность приостановки
@@ -161,6 +171,7 @@ void Exposure() {
 
           // включаем матрицу
           MatrixOn();
+          sfxHoldOff();
         }
 
         // инвертируем флаг приостановки
@@ -200,6 +211,15 @@ void Exposure() {
   // меняем заголовок
   lcd.setCursor( 0, 0 );
   lcd.print( headers[state] );
+
+  switch ( state ) {
+    case 6:
+      sfxFinish();
+      break;
+    default:
+      // none
+      ;;;
+  }
 
   // моргаем экраном
   FlashDisplay( 3 );
@@ -251,8 +271,8 @@ void Dashboard() {
 
 // главное меню настроек
 void MenuAdjust () {
-  byte current = 1;
-  byte previous;
+  int current = 1;
+  int previous = 0;
 
   lcd.clear();
 
@@ -265,13 +285,25 @@ void MenuAdjust () {
   };
 
   while ( buttonR.poll() != 1 ) {
-    current += readEncoder();
+    int turn = readEncoder();
+    current += turn;
 
     if ( current < 1 ) current = 1;
     if ( current > MENU_ADJUST - 1 ) current = MENU_ADJUST - 1;
 
     previous = current - 1;
-    if ( previous < 1 ) previous = 0;
+
+    if ( turn == 1 ) {
+      current == MENU_ADJUST - 1
+        ? sfxTurnLast()
+        : sfxTurnCW();
+    }
+
+    if ( turn == -1 ) {
+      current == 1
+        ? sfxTurnFirst()
+        : sfxTurnCCW();
+    }
 
     sprintf( buf, "%c%-7s", (uint8_t)( previous == 0 ? 165 : 32 ), items[ previous ] );
     lcd.setCursor( 0, 0 );
@@ -281,6 +313,8 @@ void MenuAdjust () {
     lcd.setCursor( 0, 1 );
     lcd.print( buf );
   }
+
+  sfxClickSingle();
 
   switch ( current ) {
     case 1:
@@ -524,4 +558,77 @@ void FlushSettings() {
   settings.erase();
 
   delay( 500 );
+}
+
+// поворот энкодера по часовой стрелке
+void sfxTurnCW() {
+  // TODO: проверка опций звука
+  tone( BUZZER, NOTE_D5, 15 );
+}
+
+// поворот энкодера против часовой стрелки
+void sfxTurnCCW() {
+  // TODO: проверка опций звука
+  tone( BUZZER, NOTE_A4, 15 );
+}
+
+// поворт энкодера выше первой позиции
+void sfxTurnFirst() {
+  // TODO: проверка опций звука
+  tone( BUZZER, NOTE_GS4, 15 );
+}
+
+// поворт энкодера ниже последней позиции
+void sfxTurnLast() {
+  // TODO: проверка опций звука
+  tone( BUZZER, NOTE_DS5, 15 );
+}
+
+// одиночное нажатие кнопки энкодера
+void sfxClickSingle() {
+  // TODO: проверка опций звука
+  tone( BUZZER, NOTE_FS5, 15 );
+}
+
+// двойное нажатие кнопки энкодера
+void sfxClickDouble() {
+  // TODO: проверка опций звука
+  tone( BUZZER, NOTE_FS5, 15 );
+}
+
+// долгое нажатие кнопки энкодера
+void sfxClickLong() {
+  // TODO: проверка опций звука
+  tone( BUZZER, NOTE_FS5, 75 );
+}
+
+// переход засветки в режим паузы
+void sfxHoldOn() {
+  // TODO: проверка опций звука
+  tone( BUZZER, NOTE_C6, 75 );
+}
+
+// переход засветки из режима паузы
+void sfxHoldOff() {
+  // TODO: проверка опций звука
+  tone( BUZZER, NOTE_FS6, 75 );
+}
+
+// нормальное завершение засветки
+void sfxFinish() {
+  int melody[] = {
+    NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
+  };
+
+  int noteDurations[] = {
+    4, 8, 8, 4, 4, 4, 4, 4
+  };
+
+  for ( int thisNote = 0; thisNote < 8; thisNote++ ) {
+    int noteDuration = 1000 / noteDurations[ thisNote ];
+    tone( BUZZER, melody[ thisNote ], noteDuration );
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay( pauseBetweenNotes );
+    noTone( BUZZER );
+  }
 }
