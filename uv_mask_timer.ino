@@ -75,7 +75,7 @@ void loop() {
   switch ( buttonR.poll() ) {
     case -1:
       sfxClickLong();
-      MenuAdjust();
+      MenuAdjust( 1 );
       break;
     case 1:
       sfxClickSingle();
@@ -271,8 +271,7 @@ void Dashboard() {
 }
 
 // главное меню настроек
-void MenuAdjust () {
-  int current = 1;
+void MenuAdjust ( int current ) {
   int previous = 0;
 
   lcd.clear();
@@ -319,19 +318,19 @@ void MenuAdjust () {
 
   switch ( current ) {
     case 1:
-      MenuProfiles( 1 );
+      MenuProfiles( 1, current );
       break;
     case 2:
-      MenuSoundEffects();
+      MenuSoundEffects( current );
       break;
     case 3:
-      FlushSettings();
+      FlushSettings( current );
       break;
   }
 }
 
 // настройки звуковых эффектов
-void MenuSoundEffects ( void ) {
+void MenuSoundEffects ( int return_to ) {
   const char items[][12] = {
     "%cSOUNDS ",
     "%cDONE  %c",
@@ -399,7 +398,7 @@ void MenuSoundEffects ( void ) {
     }
   }
   // возврат в предыдущее меню
-  MenuAdjust();
+  MenuAdjust( return_to );
 }
 
 // получение/переключении опции эффекта
@@ -420,7 +419,7 @@ bool FxOption ( int fx, bool toggle ) {
 }
 
 // настройки профилей
-void MenuProfiles ( int current ) {
+void MenuProfiles ( int current, int return_to ) {
   char items[][9] = {
     "PROFILE",
     // изменяется динамически
@@ -473,16 +472,16 @@ void MenuProfiles ( int current ) {
 
   if ( current > 0 && current < MENU_PROFILES - 1 ) {
     // изменяем профиль
-    EditProfile( current - 1 );
+    EditProfile( current - 1, return_to );
   }
   else {
     // возврат в предыдущее меню
-    MenuAdjust();
+    MenuAdjust( return_to );
   }
 }
 
 // редактирование профиля
-void EditProfile ( int profile_id ) {
+void EditProfile ( int profile_id, int return_to ) {
   int current = 0;
 
   int left;
@@ -587,7 +586,7 @@ void EditProfile ( int profile_id ) {
   }
 
   // возвращаемся в предыдущее меню на тот же пункт
-  MenuProfiles( profile_id + 1 );
+  MenuProfiles( profile_id + 1, return_to );
 }
 
 // ввода единиц времени
@@ -635,7 +634,7 @@ int readEncoder () {
 }
 
 // сброс всех настроек таймера
-void FlushSettings() {
+void FlushSettings ( int return_to ) {
   lcd.clear();
   lcd.setCursor( 0, 0 );
   lcd.print( headers[7] );
@@ -648,6 +647,8 @@ void FlushSettings() {
   settings.erase();
 
   delay( 500 );
+
+  MenuAdjust( return_to );
 }
 
 // поворот энкодера по часовой стрелке
