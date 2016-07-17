@@ -24,6 +24,7 @@
 
 #define MENU_ADJUST     5
 #define MENU_PROFILES   MAX_PROFILES + 2
+#define MENU_SOUNDS     6
 
 // ограничения при вводе времени
 #define LIMIT_MINUTES   5 * 60
@@ -321,12 +322,101 @@ void MenuAdjust () {
       MenuProfiles( 1 );
       break;
     case 2:
-      // TODO: MenuSounds
+      MenuSoundEffects();
       break;
     case 3:
       FlushSettings();
       break;
   }
+}
+
+// настройки звуковых эффектов
+void MenuSoundEffects ( void ) {
+  const char items[][12] = {
+    "%cSOUNDS ",
+    "%cDONE  %c",
+    "%cTURN  %c",
+    "%cHOLD  %c",
+    "%cCLICK %c",
+    "%cEXIT   "
+  };
+
+  int current = 0;
+  int previous;
+
+  bool done = false;
+
+  lcd.clear();
+
+  while ( !done ) {
+    int turn  = readEncoder();
+    int clicks = buttonR.poll();
+
+    current += turn;
+
+    if ( current < 1 )                  current = 1;
+    if ( current > MENU_SOUNDS - 1 )    current = MENU_SOUNDS - 1;
+
+    previous = current - 1;
+
+    // текущий и предыдущий пункты меню являются звуковыми эффектами?
+    bool is_fx_current  = current >= 1  && current < MENU_SOUNDS - 1;
+    bool is_fx_previous = previous >= 1 && previous < MENU_SOUNDS - 1;
+
+    // space (32)
+    // letter Y (89)
+    // letter N (78)
+    // centered square dot (165)
+    // right arrow (126)
+    sprintf(
+      buf,
+      items[ previous ],
+      (uint8_t)( previous == 0 ? 165 : 32 ),
+      ( is_fx_previous ? (uint8_t)( FxOption( previous, false ) ? 89 : 78 ) : false )
+    );
+    lcd.setCursor( 0, 0 );
+    lcd.print( buf );
+
+    sprintf(
+      buf,
+      items[ current ],
+      (uint8_t)( 126 ),
+      ( is_fx_current ? (uint8_t)( FxOption( current, false ) ? 89 : 78 ) : false )
+    );
+    lcd.setCursor( 0, 1 );
+    lcd.print( buf );
+
+    if ( clicks ) {
+      // если нажата кнопка
+      if ( current != MENU_SOUNDS - 1 ) {
+        // изменение опции текущего звука
+        FxOption( current, true );
+      }
+      else {
+        // выход из меню
+        done = true;
+      }
+    }
+  }
+  // возврат в предыдущее меню
+  MenuAdjust();
+}
+
+// получение/переключении опции эффекта
+// TODO: использовать EEPROM
+bool FxOption ( int fx, bool toggle ) {
+  static bool options[] = {
+    true,
+    true,
+    true,
+    true
+  };
+
+  // если передан флаг инвертирования значения
+  if ( toggle )
+    options[ fx - 1 ] = !options[ fx - 1 ];
+
+  return options[ fx - 1 ];
 }
 
 // настройки профилей
