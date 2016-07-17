@@ -272,6 +272,7 @@ void Dashboard () {
 // главное меню настроек
 void MenuAdjust ( int current ) {
   int previous = 0;
+  int was_value = -1;
 
   lcd.clear();
 
@@ -292,17 +293,8 @@ void MenuAdjust ( int current ) {
 
     previous = current - 1;
 
-    if ( turn == 1 ) {
-      current == MENU_ADJUST - 1
-        ? sfxTurnLast()
-        : sfxTurnCW();
-    }
-
-    if ( turn == -1 ) {
-      current == 1
-        ? sfxTurnFirst()
-        : sfxTurnCCW();
-    }
+    // эффект вращения в любую сторону
+    sfxTurnAny( turn, was_value, current );
 
     sprintf( buf, "%c%-7s", (uint8_t)( previous == 0 ? 165 : 32 ), items[ previous ] );
     lcd.setCursor( 0, 0 );
@@ -311,6 +303,9 @@ void MenuAdjust ( int current ) {
     sprintf( buf, "%c%-7s", (uint8_t)126, items[ current ] );
     lcd.setCursor( 0, 1 );
     lcd.print( buf );
+
+    // обновляем предыдущее значение текущим
+    was_value = current;
   }
 
   sfxClickSingle();
@@ -341,6 +336,7 @@ void MenuSoundEffects ( int return_to ) {
 
   int current = 0;
   int previous;
+  int was_value = -1;
 
   bool done = false;
 
@@ -360,6 +356,9 @@ void MenuSoundEffects ( int return_to ) {
     // текущий и предыдущий пункты меню являются звуковыми эффектами?
     bool is_fx_current  = current >= 1  && current < MENU_SOUNDS - 1;
     bool is_fx_previous = previous >= 1 && previous < MENU_SOUNDS - 1;
+
+    // эффект вращения в любую сторону
+    sfxTurnAny( turn, was_value, current );
 
     // space (32)
     // letter Y (89)
@@ -385,6 +384,9 @@ void MenuSoundEffects ( int return_to ) {
     lcd.print( buf );
 
     if ( clicks ) {
+      // TODO: выводить по клику соответствующий эффект
+      sfxClickSingle();
+
       // если нажата кнопка
       if ( current != MENU_SOUNDS - 1 ) {
         // изменение опции текущего звука
@@ -395,6 +397,9 @@ void MenuSoundEffects ( int return_to ) {
         done = true;
       }
     }
+
+    // обновляем предыдущее значение текущим
+    was_value = current;
   }
   // возврат в предыдущее меню
   MenuAdjust( return_to );
@@ -436,11 +441,14 @@ void MenuProfiles ( int current, int return_to ) {
   int previous;
   int minutes;
   int seconds;
+  int was_value = -1;
 
   lcd.clear();
 
   while ( button.poll() != 1 ) {
-    current += readEncoder();
+    int turn = readEncoder();
+
+    current += turn;
 
     if ( current < 1 )                  current = 1;
     if ( current > MENU_PROFILES - 1 )  current = MENU_PROFILES - 1;
@@ -460,6 +468,9 @@ void MenuProfiles ( int current, int return_to ) {
       );
     }
 
+    // эффект вращения в любую сторону
+    sfxTurnAny( turn, was_value, current );
+
     sprintf( buf, "%c%-7s", (uint8_t)( previous == 0 ? 165 : 32 ), items[ previous ] );
     lcd.setCursor( 0, 0 );
     lcd.print( buf );
@@ -467,7 +478,12 @@ void MenuProfiles ( int current, int return_to ) {
     sprintf( buf, "%c%-7s", (uint8_t)126, items[ current ] );
     lcd.setCursor( 0, 1 );
     lcd.print( buf );
+
+    // обновляем предыдущее значение текущим
+    was_value = current;
   }
+
+  sfxClickSingle();
 
   if ( current > 0 && current < MENU_PROFILES - 1 ) {
     // изменяем профиль
@@ -512,11 +528,13 @@ void EditProfile ( int profile_id, int return_to ) {
     lcd.print( buf );
 
     while ( button.poll() != 1 ) {
-      current += readEncoder();
+      int turn = readEncoder();
+
+      current += turn;
 
       // проверка выхода за пределы пунктов меню
       if ( current < 0 )  current = 3;
-      if ( current > 4 )  current = 0;
+      if ( current > 3 )  current = 0;
 
       switch ( current ) {
         case 0:
@@ -536,6 +554,9 @@ void EditProfile ( int profile_id, int return_to ) {
           break;
       }
 
+      // эффект вращения в любую сторону
+      sfxTurnAny( turn, -1, 1 );
+
       // прокручиваем и отображаем часть второй строки
       sprintf(
         buf,
@@ -549,6 +570,8 @@ void EditProfile ( int profile_id, int return_to ) {
       lcd.setCursor( 0, 1 );
       lcd.print( buf );
     }
+
+    sfxClickSingle();
 
     switch ( current ) {
       case 0:
@@ -591,6 +614,7 @@ void EditProfile ( int profile_id, int return_to ) {
 // ввода единиц времени
 void InputTimeValue ( const char* header, const int limit, int *value, const int format_id ) {
   int clicks;
+  int was_value = -1;
 
   // форматы
   const char formats[][10] = {
@@ -601,15 +625,25 @@ void InputTimeValue ( const char* header, const int limit, int *value, const int
   lcd.clear();
 
   while ( ( clicks = button.poll() ) != 1 ) {
-    *value += readEncoder();
+    int turn = readEncoder();
+    *value += turn;
 
     // двойной клик: сбрасываем значение
-    if ( clicks == 2 )  *value = 0;
+    if ( clicks == 2 )  {
+      *value = 0;
+      sfxClickDouble();
+    }
     // удержание: выставляем максимальное
-    if ( clicks == -1 ) *value = limit;
+    if ( clicks == -1 ) {
+      *value = limit;
+      sfxClickLong();
+    }
 
     if ( *value < 0 )      *value = 0;
     if ( *value > limit )  *value = limit;
+
+    // эффект вращения в любую сторону
+    sfxTurnAny( turn, was_value, *value );
 
     // заголовок
     sprintf( buf, "%-8s", header );
@@ -620,7 +654,13 @@ void InputTimeValue ( const char* header, const int limit, int *value, const int
     sprintf( buf, formats[ format_id ], *value );
     lcd.setCursor( 0, 1 );
     lcd.print( buf );
+
+    // обновляем предыдущее значение текущим
+    was_value = *value;
   }
+
+  // одиночное нажатие: выход
+  sfxClickSingle();
 }
 
 // чтение смещения энкодера
@@ -672,6 +712,27 @@ void sfxTurnFirst () {
 void sfxTurnLast () {
   // TODO: проверка опций звука
   tone( FX_BUZZER, NOTE_DS5, 15 );
+}
+
+// эффект вращения в любую сторона с отбивкой границ
+void sfxTurnAny ( int direction, int previous, int current ) {
+  // по часовой стрелке
+  if ( direction == 1 ) {
+    previous == current     // значение совпадает с прошлым?
+      ? sfxTurnLast()       // отбивка верхней границы
+      : sfxTurnCW();        // стандартный эффект
+
+    return;
+  }
+
+  // против часовой стрелке
+  if ( direction == -1 ) {
+    previous == current     // значение совпадает с прошлым?
+      ? sfxTurnFirst()      // отбивка нижней границы
+      : sfxTurnCCW();       // стандартный эффект
+
+    return;
+  }
 }
 
 // одиночное нажатие кнопки энкодера
