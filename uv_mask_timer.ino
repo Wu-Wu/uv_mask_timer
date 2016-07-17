@@ -288,8 +288,8 @@ void MenuAdjust ( int current ) {
     int turn = readEncoder();
     current += turn;
 
-    if ( current < 1 ) current = 1;
-    if ( current > MENU_ADJUST - 1 ) current = MENU_ADJUST - 1;
+    // обеспечиваем значение в требуемых границах
+    EnforceValue( &current, 1, MENU_ADJUST - 1 );
 
     previous = current - 1;
 
@@ -348,8 +348,8 @@ void MenuSoundEffects ( int return_to ) {
 
     current += turn;
 
-    if ( current < 1 )                  current = 1;
-    if ( current > MENU_SOUNDS - 1 )    current = MENU_SOUNDS - 1;
+    // обеспечиваем значение в требуемых границах
+    EnforceValue( &current, 1, MENU_SOUNDS - 1 );
 
     previous = current - 1;
 
@@ -450,11 +450,10 @@ void MenuProfiles ( int current, int return_to ) {
 
     current += turn;
 
-    if ( current < 1 )                  current = 1;
-    if ( current > MENU_PROFILES - 1 )  current = MENU_PROFILES - 1;
+    // обеспечиваем значение в требуемых границах
+    EnforceValue( &current, 1, MENU_PROFILES - 1 );
 
     previous = current - 1;
-    if ( previous < 1 ) previous = 0;
 
     for ( int i = 1; i < MENU_PROFILES - 1; i++ ) {
       // считываем значения профиля
@@ -639,8 +638,8 @@ void InputTimeValue ( const char* header, const int limit, int *value, const int
       sfxClickLong();
     }
 
-    if ( *value < 0 )      *value = 0;
-    if ( *value > limit )  *value = limit;
+    // обеспечиваем значение в требуемых границах
+    EnforceValue( value, 0, limit );
 
     // эффект вращения в любую сторону
     sfxTurnAny( turn, was_value, *value );
@@ -688,6 +687,19 @@ void FlushSettings ( int return_to ) {
   delay( 500 );
 
   MenuAdjust( return_to );
+}
+
+// корректировка значения для исключения выхода за границы диапазона
+void EnforceValue ( int *value, const int lower, const int upper ) {
+  if ( *value < lower ) {
+    *value = lower;
+    return;
+  }
+
+  if ( *value > upper ) {
+    *value = upper;
+    return;
+  }
 }
 
 // поворот энкодера по часовой стрелке
