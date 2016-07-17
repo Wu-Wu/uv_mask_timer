@@ -12,13 +12,12 @@
 // энкодер
 #define ENC_CLK         9
 #define ENC_DT          10
-#define ENC_SW          2     // IRQ0 (pin 2)
+#define ENC_SW          2
 
 // выход управления матрицей светодиодов
 #define UV_MATRIX       13
-
 // выход управления пищалкой
-#define BUZZER          8
+#define FX_BUZZER       8
 
 #define MAX_PROFILES    8
 
@@ -33,7 +32,7 @@
 LiquidCrystal lcd( 12, 11, 7, 6, 5, 4 );
 
 QuadEncoder encoder( ENC_CLK, ENC_DT );
-MultiClick buttonR( ENC_SW );
+MultiClick button( ENC_SW );
 TimerSettings settings( MAX_PROFILES );
 
 char buf[9];
@@ -52,11 +51,11 @@ const char *headers[9] = {
   " MEMORY ",     // flushsettings
 };
 
-void setup() {
+void setup () {
   Serial.begin( 9600 );
   lcd.begin( 8, 2 );
 
-  pinMode( BUZZER, OUTPUT );
+  pinMode( FX_BUZZER, OUTPUT );
 
   pinMode( UV_MATRIX, OUTPUT );
   MatrixOff();
@@ -71,8 +70,8 @@ void setup() {
   FlashDisplay( 2 );
 }
 
-void loop() {
-  switch ( buttonR.poll() ) {
+void loop () {
+  switch ( button.poll() ) {
     case -1:
       sfxClickLong();
       MenuAdjust( 1 );
@@ -92,7 +91,7 @@ void loop() {
 }
 
 // заставка
-void Splash() {
+void Splash () {
   lcd.clear();
   lcd.print( headers[0] );
 
@@ -121,7 +120,7 @@ void Splash() {
 }
 
 // засветка
-void Exposure() {
+void Exposure () {
   unsigned long tm_exposure = settings.time_limit();
   unsigned long tm_estimated = 0L;
   unsigned long tm_elapsed = 0L;
@@ -198,7 +197,7 @@ void Exposure() {
       tm_elapsed = millis();
     }
 
-    clicks = buttonR.poll();
+    clicks = button.poll();
 
     if ( tm_elapsed > tm_estimated ) {
       // нормальное завершение: время вышло
@@ -229,17 +228,17 @@ void Exposure() {
 }
 
 // включение матрицы светодиодов
-void MatrixOn() {
+void MatrixOn () {
   digitalWrite( UV_MATRIX, HIGH );
 }
 
 // выключение матрицы светодиодов
-void MatrixOff() {
+void MatrixOff () {
   digitalWrite( UV_MATRIX, LOW );
 }
 
 // моргаем экраном
-void FlashDisplay( byte times ) {
+void FlashDisplay ( byte times ) {
   while ( times > 0 ) {
     delay( 600 );
     lcd.noDisplay();
@@ -250,7 +249,7 @@ void FlashDisplay( byte times ) {
 }
 
 // дашборд
-void Dashboard() {
+void Dashboard () {
   int minutes;
   int seconds;
 
@@ -284,7 +283,7 @@ void MenuAdjust ( int current ) {
     "EXIT"
   };
 
-  while ( buttonR.poll() != 1 ) {
+  while ( button.poll() != 1 ) {
     int turn = readEncoder();
     current += turn;
 
@@ -349,7 +348,7 @@ void MenuSoundEffects ( int return_to ) {
 
   while ( !done ) {
     int turn  = readEncoder();
-    int clicks = buttonR.poll();
+    int clicks = button.poll();
 
     current += turn;
 
@@ -440,7 +439,7 @@ void MenuProfiles ( int current, int return_to ) {
 
   lcd.clear();
 
-  while ( buttonR.poll() != 1 ) {
+  while ( button.poll() != 1 ) {
     current += readEncoder();
 
     if ( current < 1 )                  current = 1;
@@ -512,7 +511,7 @@ void EditProfile ( int profile_id, int return_to ) {
     lcd.setCursor( 0, 0 );
     lcd.print( buf );
 
-    while ( buttonR.poll() != 1 ) {
+    while ( button.poll() != 1 ) {
       current += readEncoder();
 
       // проверка выхода за пределы пунктов меню
@@ -601,7 +600,7 @@ void InputTimeValue ( const char* header, const int limit, int *value, const int
 
   lcd.clear();
 
-  while ( ( clicks = buttonR.poll() ) != 1 ) {
+  while ( ( clicks = button.poll() ) != 1 ) {
     *value += readEncoder();
 
     // двойной клик: сбрасываем значение
@@ -652,61 +651,61 @@ void FlushSettings ( int return_to ) {
 }
 
 // поворот энкодера по часовой стрелке
-void sfxTurnCW() {
+void sfxTurnCW () {
   // TODO: проверка опций звука
-  tone( BUZZER, NOTE_D5, 15 );
+  tone( FX_BUZZER, NOTE_D5, 15 );
 }
 
 // поворот энкодера против часовой стрелки
-void sfxTurnCCW() {
+void sfxTurnCCW () {
   // TODO: проверка опций звука
-  tone( BUZZER, NOTE_A4, 15 );
+  tone( FX_BUZZER, NOTE_A4, 15 );
 }
 
 // поворт энкодера выше первой позиции
-void sfxTurnFirst() {
+void sfxTurnFirst () {
   // TODO: проверка опций звука
-  tone( BUZZER, NOTE_GS4, 15 );
+  tone( FX_BUZZER, NOTE_GS4, 15 );
 }
 
 // поворт энкодера ниже последней позиции
-void sfxTurnLast() {
+void sfxTurnLast () {
   // TODO: проверка опций звука
-  tone( BUZZER, NOTE_DS5, 15 );
+  tone( FX_BUZZER, NOTE_DS5, 15 );
 }
 
 // одиночное нажатие кнопки энкодера
-void sfxClickSingle() {
+void sfxClickSingle () {
   // TODO: проверка опций звука
-  tone( BUZZER, NOTE_FS5, 15 );
+  tone( FX_BUZZER, NOTE_FS5, 15 );
 }
 
 // двойное нажатие кнопки энкодера
-void sfxClickDouble() {
+void sfxClickDouble () {
   // TODO: проверка опций звука
-  tone( BUZZER, NOTE_FS5, 15 );
+  tone( FX_BUZZER, NOTE_FS5, 15 );
 }
 
 // долгое нажатие кнопки энкодера
-void sfxClickLong() {
+void sfxClickLong () {
   // TODO: проверка опций звука
-  tone( BUZZER, NOTE_FS5, 75 );
+  tone( FX_BUZZER, NOTE_FS5, 75 );
 }
 
 // переход засветки в режим паузы
-void sfxHoldOn() {
+void sfxHoldOn () {
   // TODO: проверка опций звука
-  tone( BUZZER, NOTE_C6, 75 );
+  tone( FX_BUZZER, NOTE_C6, 75 );
 }
 
 // переход засветки из режима паузы
-void sfxHoldOff() {
+void sfxHoldOff () {
   // TODO: проверка опций звука
-  tone( BUZZER, NOTE_FS6, 75 );
+  tone( FX_BUZZER, NOTE_FS6, 75 );
 }
 
 // нормальное завершение засветки
-void sfxFinish() {
+void sfxFinish () {
   int melody[] = {
     NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
   };
@@ -717,9 +716,9 @@ void sfxFinish() {
 
   for ( int thisNote = 0; thisNote < 8; thisNote++ ) {
     int noteDuration = 1000 / noteDurations[ thisNote ];
-    tone( BUZZER, melody[ thisNote ], noteDuration );
+    tone( FX_BUZZER, melody[ thisNote ], noteDuration );
     int pauseBetweenNotes = noteDuration * 1.30;
     delay( pauseBetweenNotes );
-    noTone( BUZZER );
+    noTone( FX_BUZZER );
   }
 }
