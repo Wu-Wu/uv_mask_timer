@@ -21,7 +21,7 @@
 
 #define MAX_PROFILES    8
 
-#define MENU_ADJUST     5
+#define MENU_ADJUST     6
 #define MENU_PROFILES   MAX_PROFILES + 2
 #define MENU_SOUNDS     6
 
@@ -280,6 +280,7 @@ void MenuAdjust ( int current ) {
     "ADJUST",
     "PROFILE",
     "SOUNDS",
+    "DRIFT",
     "RESET",
     "EXIT"
   };
@@ -318,6 +319,9 @@ void MenuAdjust ( int current ) {
       MenuSoundEffects( current );
       break;
     case 3:
+      TuneDrift( current );
+      break;
+    case 4:
       FlushSettings( current );
       break;
   }
@@ -660,6 +664,59 @@ void InputTimeValue ( const char* header, const int limit, int *value, const int
 
   // одиночное нажатие: выход
   sfxClickSingle();
+}
+
+// настройка компенсации убегания/уставания таймера
+void TuneDrift ( int return_to ) {
+  int clicks;
+  int was_value = -1;
+  int current = 0;
+  const int upper = 300;
+  const int lower = -300;
+  bool toggled = false;
+
+  lcd.clear();
+
+  // заголовок
+  sprintf( buf, "%cDRIFT ", (uint8_t)( 165 ) );
+  lcd.setCursor( 0, 0 );
+  lcd.print( buf );
+
+  while ( ( clicks = button.poll() ) != 1 ) {
+    int turn = readEncoder();
+    current += turn;
+
+    // двойной клик: сбрасываем значение
+    if ( clicks == 2 )  {
+      current = 0;
+      sfxClickDouble();
+    }
+    // удержание: выставляем максимальное/минимальное значения
+    if ( clicks == -1 ) {
+      current = toggled ? lower : upper;
+      toggled = !toggled;
+      sfxClickLong();
+    }
+
+    // обеспечиваем значение в требуемых границах
+    EnforceValue( &current, lower, upper );
+
+    // эффект вращения в любую сторону
+    sfxTurnAny( turn, was_value, current );
+
+    // вводимое значение
+    sprintf( buf, "< %+04d >", current );
+    lcd.setCursor( 0, 1 );
+    lcd.print( buf );
+
+    // обновляем предыдущее значение текущим
+    was_value = current;
+  }
+
+  // одиночное нажатие: выход
+  sfxClickSingle();
+  // возврат в предыдущее меню
+  MenuAdjust( return_to );
 }
 
 // чтение смещения энкодера
