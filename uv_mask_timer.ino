@@ -331,10 +331,10 @@ void MenuAdjust ( int current ) {
 void MenuSoundEffects ( int return_to ) {
   const char items[][12] = {
     "%cSOUNDS ",
-    "%cDONE  %c",
-    "%cTURN  %c",
-    "%cHOLD  %c",
-    "%cCLICK %c",
+    "%cDONE  %c",   // #0
+    "%cTURN  %c",   // #1
+    "%cHOLD  %c",   // #2
+    "%cCLICK %c",   // #3
     "%cEXIT   "
   };
 
@@ -373,7 +373,7 @@ void MenuSoundEffects ( int return_to ) {
       buf,
       items[ previous ],
       (uint8_t)( previous == 0 ? 165 : 32 ),
-      ( is_fx_previous ? (uint8_t)( FxOption( previous, false ) ? 89 : 78 ) : false )
+      ( is_fx_previous ? (uint8_t)( settings.effect( previous - 1 ) ? 89 : 78 ) : false )
     );
     lcd.setCursor( 0, 0 );
     lcd.print( buf );
@@ -382,7 +382,7 @@ void MenuSoundEffects ( int return_to ) {
       buf,
       items[ current ],
       (uint8_t)( 126 ),
-      ( is_fx_current ? (uint8_t)( FxOption( current, false ) ? 89 : 78 ) : false )
+      ( is_fx_current ? (uint8_t)( settings.effect( current - 1 ) ? 89 : 78 ) : false )
     );
     lcd.setCursor( 0, 1 );
     lcd.print( buf );
@@ -393,8 +393,8 @@ void MenuSoundEffects ( int return_to ) {
 
       // если нажата кнопка
       if ( current != MENU_SOUNDS - 1 ) {
-        // изменение опции текущего звука
-        FxOption( current, true );
+        // изменение опции текущего эффекта
+        settings.toggle_effect( current - 1 );
       }
       else {
         // выход из меню
@@ -407,23 +407,6 @@ void MenuSoundEffects ( int return_to ) {
   }
   // возврат в предыдущее меню
   MenuAdjust( return_to );
-}
-
-// получение/переключении опции эффекта
-// TODO: использовать EEPROM
-bool FxOption ( int fx, bool toggle ) {
-  static bool options[] = {
-    true,
-    true,
-    true,
-    true
-  };
-
-  // если передан флаг инвертирования значения
-  if ( toggle )
-    options[ fx - 1 ] = !options[ fx - 1 ];
-
-  return options[ fx - 1 ];
 }
 
 // настройки профилей
@@ -763,30 +746,41 @@ void EnforceValue ( int *value, const int lower, const int upper ) {
 
 // поворот энкодера по часовой стрелке
 void sfxTurnCW () {
-  // TODO: проверка опций звука
+  if ( !settings.effect( 1 ) )
+    return;
+
   tone( FX_BUZZER, NOTE_D5, 15 );
 }
 
 // поворот энкодера против часовой стрелки
 void sfxTurnCCW () {
-  // TODO: проверка опций звука
+  if ( !settings.effect( 1 ) )
+    return;
+
   tone( FX_BUZZER, NOTE_A4, 15 );
 }
 
 // поворт энкодера выше первой позиции
 void sfxTurnFirst () {
-  // TODO: проверка опций звука
+  if ( !settings.effect( 1 ) )
+    return;
+
   tone( FX_BUZZER, NOTE_GS4, 15 );
 }
 
 // поворт энкодера ниже последней позиции
 void sfxTurnLast () {
-  // TODO: проверка опций звука
+  if ( !settings.effect( 1 ) )
+    return;
+
   tone( FX_BUZZER, NOTE_DS5, 15 );
 }
 
 // эффект вращения в любую сторона с отбивкой границ
 void sfxTurnAny ( int direction, int previous, int current ) {
+  if ( !settings.effect( 1 ) )
+    return;
+
   // по часовой стрелке
   if ( direction == 1 ) {
     previous == current     // значение совпадает с прошлым?
@@ -808,36 +802,49 @@ void sfxTurnAny ( int direction, int previous, int current ) {
 
 // одиночное нажатие кнопки энкодера
 void sfxClickSingle () {
-  // TODO: проверка опций звука
+  if ( !settings.effect( 3 ) )
+    return;
+
   tone( FX_BUZZER, NOTE_FS5, 15 );
 }
 
 // двойное нажатие кнопки энкодера
 void sfxClickDouble () {
-  // TODO: проверка опций звука
+  if ( !settings.effect( 3 ) )
+    return;
+
   tone( FX_BUZZER, NOTE_FS5, 15 );
 }
 
 // долгое нажатие кнопки энкодера
 void sfxClickLong () {
-  // TODO: проверка опций звука
+  if ( !settings.effect( 3 ) )
+    return;
+
   tone( FX_BUZZER, NOTE_FS5, 75 );
 }
 
 // переход засветки в режим паузы
 void sfxHoldOn () {
-  // TODO: проверка опций звука
+  if ( !settings.effect( 2 ) )
+    return;
+
   tone( FX_BUZZER, NOTE_C6, 75 );
 }
 
 // переход засветки из режима паузы
 void sfxHoldOff () {
-  // TODO: проверка опций звука
+  if ( !settings.effect( 2 ) )
+    return;
+
   tone( FX_BUZZER, NOTE_FS6, 75 );
 }
 
 // нормальное завершение засветки
 void sfxFinish () {
+  if ( !settings.effect( 0 ) )
+    return;
+
   int melody[] = {
     NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
   };
