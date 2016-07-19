@@ -670,7 +670,7 @@ void InputTimeValue ( const char* header, const int limit, int *value, const int
 void TuneDrift ( int return_to ) {
   int clicks;
   int was_value = -1;
-  int current = 0;
+  int current = settings.drift();
   const int upper = 300;
   const int lower = -300;
   bool toggled = false;
@@ -712,6 +712,8 @@ void TuneDrift ( int return_to ) {
     // обновляем предыдущее значение текущим
     was_value = current;
   }
+
+  settings.update_drift( current );
 
   // одиночное нажатие: выход
   sfxClickSingle();
