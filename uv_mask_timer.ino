@@ -183,6 +183,7 @@ void Exposure () {
         break;
       case 2:
         // двойной клик: отмена работы
+        sfxClickDouble();
         done = true;
         state = 5;
         break;
