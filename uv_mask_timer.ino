@@ -7,7 +7,7 @@
 #include <QuadEncoder.h>
 #include <TimerSettings.h>
 #include <MultiClick.h>
-#include "pitches.h"
+#include <SoundEffects.h>
 
 // энкодер
 #define ENC_CLK         9
@@ -34,6 +34,7 @@ LiquidCrystal lcd( 12, 11, 7, 6, 5, 4 );
 QuadEncoder encoder( ENC_CLK, ENC_DT );
 MultiClick button( ENC_SW );
 TimerSettings settings( MAX_PROFILES );
+SoundEffects sfx( FX_BUZZER );
 
 char buf[9];
 bool is_ready = false;
@@ -65,6 +66,8 @@ void setup () {
   if ( settings.selected() != -1 )
     is_ready = true;
 
+  sfx.begin( &settings );
+
   Splash();
   // моргаем экраном
   FlashDisplay( 2 );
@@ -73,16 +76,16 @@ void setup () {
 void loop () {
   switch ( button.poll() ) {
     case -1:
-      sfxClickLong();
+      sfx.ClickLong();
       MenuAdjust( 1 );
       break;
     case 1:
-      sfxClickSingle();
+      sfx.ClickSingle();
       if ( is_ready )
         Exposure();
       break;
     case 2:
-      sfxClickDouble();
+      sfx.ClickDouble();
       Splash();
       break;
     default:
@@ -159,7 +162,7 @@ void Exposure () {
 
           // отключаем матрицу
           MatrixOff();
-          sfxHoldOn();
+          sfx.HoldOn();
         }
         else {
           // длительность приостановки
@@ -171,7 +174,7 @@ void Exposure () {
 
           // включаем матрицу
           MatrixOn();
-          sfxHoldOff();
+          sfx.HoldOff();
         }
 
         // инвертируем флаг приостановки
@@ -183,7 +186,7 @@ void Exposure () {
         break;
       case 2:
         // двойной клик: отмена работы
-        sfxClickDouble();
+        sfx.ClickDouble();
         done = true;
         state = 5;
         break;
@@ -215,7 +218,7 @@ void Exposure () {
 
   switch ( state ) {
     case 6:
-      sfxFinish();
+      sfx.Finish();
       break;
     default:
       // none
@@ -296,7 +299,7 @@ void MenuAdjust ( int current ) {
     previous = current - 1;
 
     // эффект вращения в любую сторону
-    sfxTurnAny( turn, was_value, current );
+    sfx.TurnAny( turn, was_value, current );
 
     sprintf( buf, "%c%-7s", (uint8_t)( previous == 0 ? 165 : 32 ), items[ previous ] );
     lcd.setCursor( 0, 0 );
@@ -310,7 +313,7 @@ void MenuAdjust ( int current ) {
     was_value = current;
   }
 
-  sfxClickSingle();
+  sfx.ClickSingle();
 
   switch ( current ) {
     case 1:
@@ -363,7 +366,7 @@ void MenuSoundEffects ( int return_to ) {
     bool is_fx_previous = previous >= 1 && previous < MENU_SOUNDS - 1;
 
     // эффект вращения в любую сторону
-    sfxTurnAny( turn, was_value, current );
+    sfx.TurnAny( turn, was_value, current );
 
     // space (32)
     // letter Y (89)
@@ -390,7 +393,7 @@ void MenuSoundEffects ( int return_to ) {
 
     if ( clicks ) {
       // TODO: выводить по клику соответствующий эффект
-      sfxClickSingle();
+      sfx.ClickSingle();
 
       // если нажата кнопка
       if ( current != MENU_SOUNDS - 1 ) {
@@ -456,7 +459,7 @@ void MenuProfiles ( int current, int return_to ) {
     }
 
     // эффект вращения в любую сторону
-    sfxTurnAny( turn, was_value, current );
+    sfx.TurnAny( turn, was_value, current );
 
     sprintf( buf, "%c%-7s", (uint8_t)( previous == 0 ? 165 : 32 ), items[ previous ] );
     lcd.setCursor( 0, 0 );
@@ -470,7 +473,7 @@ void MenuProfiles ( int current, int return_to ) {
     was_value = current;
   }
 
-  sfxClickSingle();
+  sfx.ClickSingle();
 
   if ( current > 0 && current < MENU_PROFILES - 1 ) {
     // изменяем профиль
@@ -542,7 +545,7 @@ void EditProfile ( int profile_id, int return_to ) {
       }
 
       // эффект вращения в любую сторону
-      sfxTurnAny( turn, -1, 1 );
+      sfx.TurnAny( turn, -1, 1 );
 
       // прокручиваем и отображаем часть второй строки
       sprintf(
@@ -558,7 +561,7 @@ void EditProfile ( int profile_id, int return_to ) {
       lcd.print( buf );
     }
 
-    sfxClickSingle();
+    sfx.ClickSingle();
 
     switch ( current ) {
       case 0:
@@ -618,19 +621,19 @@ void InputTimeValue ( const char* header, const int limit, int *value, const int
     // двойной клик: сбрасываем значение
     if ( clicks == 2 )  {
       *value = 0;
-      sfxClickDouble();
+      sfx.ClickDouble();
     }
     // удержание: выставляем максимальное
     if ( clicks == -1 ) {
       *value = limit;
-      sfxClickLong();
+      sfx.ClickLong();
     }
 
     // обеспечиваем значение в требуемых границах
     EnforceValue( value, 0, limit );
 
     // эффект вращения в любую сторону
-    sfxTurnAny( turn, was_value, *value );
+    sfx.TurnAny( turn, was_value, *value );
 
     // заголовок
     sprintf( buf, "%-8s", header );
@@ -647,7 +650,7 @@ void InputTimeValue ( const char* header, const int limit, int *value, const int
   }
 
   // одиночное нажатие: выход
-  sfxClickSingle();
+  sfx.ClickSingle();
 }
 
 // настройка компенсации убегания/уставания таймера
@@ -673,20 +676,20 @@ void TuneDrift ( int return_to ) {
     // двойной клик: сбрасываем значение
     if ( clicks == 2 )  {
       current = 0;
-      sfxClickDouble();
+      sfx.ClickDouble();
     }
     // удержание: выставляем максимальное/минимальное значения
     if ( clicks == -1 ) {
       current = toggled ? lower : upper;
       toggled = !toggled;
-      sfxClickLong();
+      sfx.ClickLong();
     }
 
     // обеспечиваем значение в требуемых границах
     EnforceValue( &current, lower, upper );
 
     // эффект вращения в любую сторону
-    sfxTurnAny( turn, was_value, current );
+    sfx.TurnAny( turn, was_value, current );
 
     // вводимое значение
     sprintf( buf, "< %+04d >", current );
@@ -699,8 +702,10 @@ void TuneDrift ( int return_to ) {
 
   settings.update_drift( current );
 
+  sfx.foo();
+
   // одиночное нажатие: выход
-  sfxClickSingle();
+  sfx.ClickSingle();
   // возврат в предыдущее меню
   MenuAdjust( return_to );
 }
@@ -742,123 +747,5 @@ void EnforceValue ( int *value, const int lower, const int upper ) {
   if ( *value > upper ) {
     *value = upper;
     return;
-  }
-}
-
-// поворот энкодера по часовой стрелке
-void sfxTurnCW () {
-  if ( !settings.effect( 1 ) )
-    return;
-
-  tone( FX_BUZZER, NOTE_D5, 15 );
-}
-
-// поворот энкодера против часовой стрелки
-void sfxTurnCCW () {
-  if ( !settings.effect( 1 ) )
-    return;
-
-  tone( FX_BUZZER, NOTE_A4, 15 );
-}
-
-// поворт энкодера выше первой позиции
-void sfxTurnFirst () {
-  if ( !settings.effect( 1 ) )
-    return;
-
-  tone( FX_BUZZER, NOTE_GS4, 15 );
-}
-
-// поворт энкодера ниже последней позиции
-void sfxTurnLast () {
-  if ( !settings.effect( 1 ) )
-    return;
-
-  tone( FX_BUZZER, NOTE_DS5, 15 );
-}
-
-// эффект вращения в любую сторона с отбивкой границ
-void sfxTurnAny ( int direction, int previous, int current ) {
-  if ( !settings.effect( 1 ) )
-    return;
-
-  // по часовой стрелке
-  if ( direction == 1 ) {
-    previous == current     // значение совпадает с прошлым?
-      ? sfxTurnLast()       // отбивка верхней границы
-      : sfxTurnCW();        // стандартный эффект
-
-    return;
-  }
-
-  // против часовой стрелке
-  if ( direction == -1 ) {
-    previous == current     // значение совпадает с прошлым?
-      ? sfxTurnFirst()      // отбивка нижней границы
-      : sfxTurnCCW();       // стандартный эффект
-
-    return;
-  }
-}
-
-// одиночное нажатие кнопки энкодера
-void sfxClickSingle () {
-  if ( !settings.effect( 3 ) )
-    return;
-
-  tone( FX_BUZZER, NOTE_FS5, 15 );
-}
-
-// двойное нажатие кнопки энкодера
-void sfxClickDouble () {
-  if ( !settings.effect( 3 ) )
-    return;
-
-  tone( FX_BUZZER, NOTE_FS5, 15 );
-}
-
-// долгое нажатие кнопки энкодера
-void sfxClickLong () {
-  if ( !settings.effect( 3 ) )
-    return;
-
-  tone( FX_BUZZER, NOTE_FS5, 75 );
-}
-
-// переход засветки в режим паузы
-void sfxHoldOn () {
-  if ( !settings.effect( 2 ) )
-    return;
-
-  tone( FX_BUZZER, NOTE_C6, 75 );
-}
-
-// переход засветки из режима паузы
-void sfxHoldOff () {
-  if ( !settings.effect( 2 ) )
-    return;
-
-  tone( FX_BUZZER, NOTE_FS6, 75 );
-}
-
-// нормальное завершение засветки
-void sfxFinish () {
-  if ( !settings.effect( 0 ) )
-    return;
-
-  int melody[] = {
-    NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
-  };
-
-  int noteDurations[] = {
-    4, 8, 8, 4, 4, 4, 4, 4
-  };
-
-  for ( int thisNote = 0; thisNote < 8; thisNote++ ) {
-    int noteDuration = 1000 / noteDurations[ thisNote ];
-    tone( FX_BUZZER, melody[ thisNote ], noteDuration );
-    int pauseBetweenNotes = noteDuration * 1.30;
-    delay( pauseBetweenNotes );
-    noTone( FX_BUZZER );
   }
 }
