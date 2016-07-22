@@ -129,6 +129,7 @@ void Exposure () {
   unsigned long tm_elapsed = 0L;
   unsigned long tm_hold_on = 0L;
   unsigned long delta = 0L;
+  unsigned long now = 0L;
 
   int minutes;
   int seconds;
@@ -197,8 +198,10 @@ void Exposure () {
     delay( 10 );
 
     if ( !hold ) {
-      tm_exposure -= ( millis() - tm_elapsed );
-      tm_elapsed = millis();
+      now = millis();
+      delta = now - tm_elapsed;
+      tm_exposure -= delta;
+      tm_elapsed = now;
     }
 
     clicks = button.poll();
