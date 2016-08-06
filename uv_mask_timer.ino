@@ -10,14 +10,14 @@
 #include <SoundEffects.h>
 
 // энкодер
-#define ENC_CLK         9
-#define ENC_DT          10
-#define ENC_SW          2
+#define ENC_CLK         10
+#define ENC_DT          9
+#define ENC_SW          8
 
 // выход управления матрицей светодиодов
-#define UV_MATRIX       13
+#define UV_MATRIX       12
 // выход управления пищалкой
-#define FX_BUZZER       8
+#define FX_BUZZER       11
 
 #define MAX_PROFILES    8
 
@@ -29,7 +29,8 @@
 #define LIMIT_MINUTES   5 * 60
 #define LIMIT_SECONDS   59
 
-LiquidCrystal lcd( 12, 11, 7, 6, 5, 4 );
+// RS, E, D4, D5, D6, D7
+LiquidCrystal lcd( 2, 3, 5, 6, 4, 7 );
 
 QuadEncoder encoder( ENC_CLK, ENC_DT );
 MultiClick button( ENC_SW );
