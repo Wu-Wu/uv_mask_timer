@@ -4,7 +4,7 @@
  * Anton Gerasimov <me@zyxmasta.com>, 2016
  */
 #include <LiquidCrystal.h>
-#include "QuadEncoder.h"
+#include <QuadEncoder.h>
 #include "TimerSettings.h"
 #include "MultiClick.h"
 #include "SoundEffects.h"
@@ -708,8 +708,6 @@ void TuneDrift ( int return_to ) {
   }
 
   settings.update_drift( current );
-
-  sfx.foo();
 
   // одиночное нажатие: выход
   sfx.ClickSingle();
