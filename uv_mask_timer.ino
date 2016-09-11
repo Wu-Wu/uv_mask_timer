@@ -4,10 +4,10 @@
  * Anton Gerasimov <me@zyxmasta.com>, 2016
  */
 #include <LiquidCrystal.h>
-#include <QuadEncoder.h>
-#include <TimerSettings.h>
-#include <MultiClick.h>
-#include <SoundEffects.h>
+#include "QuadEncoder.h"
+#include "TimerSettings.h"
+#include "MultiClick.h"
+#include "SoundEffects.h"
 
 // энкодер
 #define ENC_CLK         10
@@ -28,6 +28,9 @@
 // ограничения при вводе времени
 #define LIMIT_MINUTES   5 * 60
 #define LIMIT_SECONDS   59
+
+// нажатая кнопка даёт уровень HIGH
+#define MULTICLICK_INVERT
 
 // RS, E, D4, D5, D6, D7
 LiquidCrystal lcd( 2, 3, 5, 6, 4, 7 );
@@ -54,7 +57,7 @@ const char *headers[9] = {
 };
 
 void setup () {
-  Serial.begin( 9600 );
+  // Serial.begin( 9600 );
   lcd.begin( 8, 2 );
 
   pinMode( FX_BUZZER, OUTPUT );
