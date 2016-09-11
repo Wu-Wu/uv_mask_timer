@@ -201,6 +201,8 @@ void Exposure () {
 
     delay( 10 );
 
+    // TODO: drift compensation
+
     if ( !hold ) {
       now = millis();
       delta = now - tm_elapsed;
