@@ -151,6 +151,10 @@ bool TimerSettings::erase () {
         _drift[ j ] = 0;
     }
 
+    // сброс эффектов
+    EEPROM.writeByte( _offset_effects, 0xFF );
+    while ( !EEPROM.isReady() ) { delay( 1 );  }
+
     return true;
 }
 
